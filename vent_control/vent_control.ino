@@ -32,17 +32,17 @@ void powerDownMotors() {
 }
 void PowerUpVent() {
   if(VentState==0)
-    digitalWrite(A4,HIGH);//niski bieg
+    digitalWrite(A2,HIGH);//niski bieg
   else if(VentState==1)
-    digitalWrite(A5,HIGH);//wysoki bieg
+    digitalWrite(A3,HIGH);//wysoki bieg
 }
 void PowerDownVent() {
-  digitalWrite(A4,LOW);
-  digitalWrite(A5,LOW);
+  digitalWrite(A2,LOW);
+  digitalWrite(A3,LOW);
 }
 void PowerDownVentOnSwitch() {
-  digitalWrite(A4,LOW);
-  digitalWrite(A5,LOW);
+  digitalWrite(A2,LOW);
+  digitalWrite(A3,LOW);
   delay(10);
 }
 //inicjalizacja całego systemu i rozpoczęcie obioru i wysyłu
