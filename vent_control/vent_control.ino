@@ -40,6 +40,11 @@ void PowerDownVent() {
   digitalWrite(A4,LOW);
   digitalWrite(A5,LOW);
 }
+void PowerDownVentOnSwitch() {
+  digitalWrite(A4,LOW);
+  digitalWrite(A5,LOW);
+  delay(10);
+}
 //inicjalizacja całego systemu i rozpoczęcie obioru i wysyłu
 void setup() {
   stepper.setSpeed(5); //prędość silników
@@ -64,7 +69,7 @@ void loop() {
 
     switch (command) {
       case '0': // Kabina
-        PowerDownVent();
+        PowerDownVentOnSwitch();
         stepper.step(STEPS / 4); //obrót o 90*
         delay(10);
         state = 0; 
@@ -72,7 +77,7 @@ void loop() {
         break;
         
       case '1': // Rack
-        PowerDownVent();
+        PowerDownVentOnSwitch();
         stepper.step(-STEPS / 4);//obrót o -90*
         delay(10);
         state = 1;
@@ -80,7 +85,7 @@ void loop() {
         break; 
         
       case '2': // Wentylacja
-        PowerDownVent();
+        PowerDownVentOnSwitch();
         stepper1.step(STEPS / 4);
         delay(10);
         state1 = 0;
@@ -88,7 +93,7 @@ void loop() {
         break;
         
       case '3': // Klimatyzacja
-        PowerDownVent() ;
+        PowerDownVentOnSwitch() ;
         stepper1.step(-STEPS / 4);//obrót o -90*
         delay(10);
         state1 = 1;
