@@ -17,6 +17,7 @@ char command;
 int state = 0;  
 int state1 = 0; 
 int VentState= 0;
+int EngineState=0;
 //inicjalizacja silników z definicją ich portów służących do kontroli
 Stepper stepper(STEPS, 10, 12, 11, 13);
 Stepper stepper1(STEPS, 6, 8, 7, 9);    
@@ -57,6 +58,7 @@ void loop() {
     if (command == '?') {
       bt.print(state);
       bt.print(state1);
+      bt.print(VentState);
       return;
     }
 
@@ -100,6 +102,12 @@ void loop() {
       case '5':
         VentState=0;
         PowerUpVent();
+        break;
+      case '6':
+        PowerUpVent();
+        break;
+        case '7':
+        PowerDownVent();
         break;
     }
   }
