@@ -51,6 +51,8 @@ void setup() {
   stepper1.setSpeed(5);
   bt.begin(9600);
   Serial.begin(9600);
+  pinMode(A3, OUTPUT);
+  pinMode(A2, OUTPUT);
 }
 
 //główna pętla programu
@@ -64,6 +66,7 @@ void loop() {
       bt.print(state);
       bt.print(state1);
       bt.print(VentState);
+      bt.print(EngineState);
       return;
     }
 
