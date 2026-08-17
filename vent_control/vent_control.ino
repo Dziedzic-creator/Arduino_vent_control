@@ -44,6 +44,7 @@ void PowerDownVentOnSwitch() {
   digitalWrite(A2,LOW);
   digitalWrite(A3,LOW);
   delay(10);
+  PowerUpVent();
 }
 //inicjalizacja całego systemu i rozpoczęcie obioru i wysyłu
 void setup() {
