@@ -2,64 +2,83 @@
 #include <SoftwareSerial.h>
 #include <Wire.h>
 #include <Adafruit_Sensor.h>
-#include <Adafruit_BMP085_U.h>
+#include <Adafruit_BMP085.h>
 
-Adafruit_BMP085_Unified bmp = Adafruit_BMP085_Unified(10085);
-//definicja ilości kroków w pełnym obrocie
+#define seaLevelPressure_hPa 1013.25
+
+//Adafruit_BMP085 bmp;
 const int STEPS = 2048;
-//definicja portów RX i TX
+
 SoftwareSerial bt(A0, A1); 
 
-//zmienna globalna zajmująca sie odbieraną wiadomością przez HC-05
 char command; 
-
-//stany początkowe
 int state = 0;  
 int state1 = 0; 
-int VentState= 0;
-int EngineState=0;
-//inicjalizacja silników z definicją ich portów służących do kontroli
+int VentState = 0;   // 0 = Low Gear, 1 = High Gear
+int EngineState = 0; // 0 = OFF, 1 = ON
+
+// SAFETY CHECK: This tells us if it's safe to read the sensor
+//bool bmpWorking = false; 
+
 Stepper stepper(STEPS, 10, 12, 11, 13);
 Stepper stepper1(STEPS, 6, 8, 7, 9);    
 
-
-//funkcja pomocnicza
 void powerDownMotors() {
-  for (int pin = 9; pin <= 13; pin++) {
+  for (int pin = 6; pin <= 13; pin++) { 
     digitalWrite(pin, LOW);
   }
-  // Also power down the Analog-used pins
 }
+
 void PowerUpVent() {
-  if(VentState==0)
-    digitalWrite(A2,HIGH);//niski bieg
-  else if(VentState==1)
-    digitalWrite(A3,HIGH);//wysoki bieg
+  if (EngineState == 1) { 
+    // Fan is ON, check which gear to use
+    if (VentState == 0) {
+      digitalWrite(A3, LOW);  // Safety: ensure high gear is OFF
+      delay(50);              // CRITICAL: Wait for SSR 2 to physically stop conducting
+      digitalWrite(A2, HIGH); // Turn ON low gear
+    } else if (VentState == 1) {
+      digitalWrite(A2, LOW);  // Safety: ensure low gear is OFF
+      delay(50);              // CRITICAL: Wait for SSR 1 to physically stop conducting
+      digitalWrite(A3, HIGH); // Turn ON high gear
+    }
+  } else {
+    // If EngineState is 0, ensure fan is OFF
+    PowerDownVent();
+  }
 }
+
+// Completely cuts power to the fan
 void PowerDownVent() {
-  digitalWrite(A2,LOW);
-  digitalWrite(A3,LOW);
-}
-void PowerDownVentOnSwitch() {
-  digitalWrite(A2,LOW);
-  digitalWrite(A3,LOW);
+  digitalWrite(A2, LOW);
+  digitalWrite(A3, LOW);
   delay(10);
-  PowerUpVent();
 }
-//inicjalizacja całego systemu i rozpoczęcie obioru i wysyłu
+
+// Temporarily cuts power to prevent spikes while stepper motors start up
+void PowerDownVentOnSwitch() {
+  PowerDownVent();
+  delay(50); // Give the relay time to actually shut off
+}
+
 void setup() {
-  stepper.setSpeed(5); //prędość silników
+  stepper.setSpeed(5); 
   stepper1.setSpeed(5);
   bt.begin(9600);
   Serial.begin(9600);
+  
   pinMode(A3, OUTPUT);
   pinMode(A2, OUTPUT);
+  
+  // if (!bmp.begin()) {
+  //   Serial.println("BMP085 failed. Motors will still work.");
+  //   bmpWorking = false; // Sensor failed, do not try to read it later!
+  // } else {
+  //   bmpWorking = true;  // Sensor works!
+  // }
 }
 
-//główna pętla programu
 void loop() {
-
-  if (bt.available()) {//dba o brak działania w razie braku podłączonego urządzenia
+  if (bt.available()) {
     command = bt.read();
     if (command == '\n' || command == '\r') return; 
 
@@ -68,24 +87,33 @@ void loop() {
       bt.print(state1);
       bt.print(VentState);
       bt.print(EngineState);
-      return;
-    }
-
+      
+      // if (bmpWorking) {
+      //   bt.print(bmp.readTemperature());
+      // } else {
+      //   bt.print("Err"); 
+      // }
+      
+      return; 
+    }         
+  
     switch (command) {
       case '0': // Kabina
         PowerDownVentOnSwitch();
-        stepper.step(STEPS / 4); //obrót o 90*
+        stepper.step(STEPS / 4); 
         delay(10);
         state = 0; 
-        powerDownMotors(); // Release power after move
+        powerDownMotors(); 
+        PowerUpVent();
         break;
         
       case '1': // Rack
         PowerDownVentOnSwitch();
-        stepper.step(-STEPS / 4);//obrót o -90*
+        stepper.step(-STEPS / 4);
         delay(10);
         state = 1;
-        powerDownMotors(); // Release power after move
+        powerDownMotors();
+        PowerUpVent(); 
         break; 
         
       case '2': // Wentylacja
@@ -93,29 +121,38 @@ void loop() {
         stepper1.step(STEPS / 4);
         delay(10);
         state1 = 0;
-        powerDownMotors(); // Release power after move
+        powerDownMotors();
+        PowerUpVent(); 
         break;
         
       case '3': // Klimatyzacja
-        PowerDownVentOnSwitch() ;
-        stepper1.step(-STEPS / 4);//obrót o -90*
+        PowerDownVentOnSwitch();
+        stepper1.step(-STEPS / 4);
         delay(10);
         state1 = 1;
-        powerDownMotors(); // Release power after move
+        powerDownMotors();
+        PowerUpVent(); 
         break;
         
-      case '4':
-        VentState=1;
+      case '4': // Set High Gear and turn ON
+        VentState = 1;
+        
         PowerUpVent();
         break;
-      case '5':
-        VentState=0;
+        
+      case '5': // Set Low Gear and turn ON
+        VentState = 0;
+        
         PowerUpVent();
         break;
-      case '6':
+        
+      case '6': // Turn Engine ON (leaves it in whatever gear was last used)
+        EngineState = 1;
         PowerUpVent();
         break;
-        case '7':
+        
+      case '7': // Turn Engine OFF
+        EngineState = 0;
         PowerDownVent();
         break;
     }
