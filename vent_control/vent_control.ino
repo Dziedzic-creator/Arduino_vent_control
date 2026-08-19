@@ -6,7 +6,7 @@
 
 #define seaLevelPressure_hPa 1013.25
 
-//Adafruit_BMP085 bmp;
+ Adafruit_BMP085 bmp;
 const int STEPS = 2048;
 
 SoftwareSerial bt(A0, A1); 
@@ -18,7 +18,7 @@ int VentState = 0;   // 0 = Low Gear, 1 = High Gear
 int EngineState = 0; // 0 = OFF, 1 = ON
 
 // SAFETY CHECK: This tells us if it's safe to read the sensor
-//bool bmpWorking = false; 
+bool bmpWorking = false; 
 
 Stepper stepper(STEPS, 10, 12, 11, 13);
 Stepper stepper1(STEPS, 6, 8, 7, 9);    
@@ -69,12 +69,12 @@ void setup() {
   pinMode(A3, OUTPUT);
   pinMode(A2, OUTPUT);
   
-  // if (!bmp.begin()) {
-  //   Serial.println("BMP085 failed. Motors will still work.");
-  //   bmpWorking = false; // Sensor failed, do not try to read it later!
-  // } else {
-  //   bmpWorking = true;  // Sensor works!
-  // }
+  if (!bmp.begin()) {
+    Serial.println("BMP085 failed. Motors will still work.");
+    bmpWorking = false; // Sensor failed, do not try to read it later!
+  } else {
+    bmpWorking = true;  // Sensor works!
+  }
 }
 
 void loop() {
@@ -88,11 +88,9 @@ void loop() {
       bt.print(VentState);
       bt.print(EngineState);
       
-      // if (bmpWorking) {
-      //   bt.print(bmp.readTemperature());
-      // } else {
-      //   bt.print("Err"); 
-      // }
+      if (bmpWorking) {
+        bt.print(bmp.readTemperature());
+      }
       
       return; 
     }         
