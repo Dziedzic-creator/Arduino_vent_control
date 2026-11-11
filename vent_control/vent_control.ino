@@ -137,7 +137,7 @@ void loop() {
         
       case '2': // Wentylacja
         PowerDownVentOnSwitch();
-        stepper1.step(STEPS / 4);
+        stepper1.step(-STEPS / 4); //znak został zamieniony na - ze względu na zły sposób odwracania się silnika wentylacyjnego (silnik został również zamieniony miejscami)
         delay(10);
         state1 = 0;
         powerDownMotors();
@@ -147,7 +147,7 @@ void loop() {
         
       case '3': // Klimatyzacja
         PowerDownVentOnSwitch();
-        stepper1.step(-STEPS / 4);
+        stepper1.step(STEPS / 4); //znak został zamieniony na + ze względu na zły sposób odwracania się silnika wentylacyjnego (silnik został również zamieniony miejscami)
         delay(10);
         state1 = 1;
         powerDownMotors();
